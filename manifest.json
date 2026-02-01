@@ -1,0 +1,10 @@
+{
+  "name": "Anki Satzapp Examples",
+  "package": "AnkiSatzappExamples",
+  "version": "0.0.1",
+  "mod": 1753734178,
+  "author": "Frank Valenziano",
+  "description": "Fetches German example sentences and English translations from Satzapp.",
+  "min_anki_version": "24.06",
+  "supportUrl": "https://github.com/frankvalenziano/AnkiAddonGenerateAudio"
+}
