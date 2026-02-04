@@ -18,7 +18,15 @@ from aqt.utils import showInfo
 
 def generate_examples_for_note(note: Note, replace_existing=False):
     """Fetch example sentences for a single Anki note's 'term' field from Satzapp."""
-    term = note["term"].strip() if "term" in note else ""
+    # Case-insensitive field detection
+    field_names = note.keys()
+    term_field = next((f for f in field_names if f.lower() == "term"), None)
+    example_field = next((f for f in field_names if f.lower() == "example"), None)
+
+    if not term_field or not example_field:
+        return
+
+    term = note[term_field].strip()
     unescaped = html.unescape(term)
     soup = BeautifulSoup(unescaped, "html.parser")
     term = soup.get_text().strip()
@@ -27,14 +35,17 @@ def generate_examples_for_note(note: Note, replace_existing=False):
         return
 
     # Add example sentences from Satzapp if Example field exists and is empty (or replacing)
-    if "Example" in note and (not note["Example"].strip() or replace_existing):
+    if not note[example_field].strip() or replace_existing:
         try:
             examples = get_example_sentences(term)
             if examples:
-                note["Example"] = examples
+                note[example_field] = examples
                 note.flush()
+        except CaptchaError:
+            # Re-raise CaptchaError so it can be handled by the caller/UI
+            raise
         except Exception as e:
-            # Silently log errors to console for now, or show Info if critical
+            # Silently log other errors to console for now
             print(f"❌ Error fetching examples for '{term}': {e}")
 
 def _run_fetching_background(nids=None, selected_decks=None, replace=False):
