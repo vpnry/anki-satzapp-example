@@ -37,12 +37,8 @@ def generate_examples_for_note(note: Note, replace_existing=False):
             # Silently log errors to console for now, or show Info if critical
             print(f"❌ Error fetching examples for '{term}': {e}")
 
-def run_example_fetching():
-    """Initiate the example sentence fetching process with background processing."""
-    selected_decks, replace = select_decks_and_options()
-    if not selected_decks:
-        return
-
+def _run_fetching_background(nids=None, selected_decks=None, replace=False):
+    """Core background processing logic shared between deck and selection fetching."""
     def on_success(count):
         showInfo(f"✅ Example sentences fetched for {count} notes from Satzapp.")
 
@@ -65,7 +61,7 @@ def run_example_fetching():
             mw.progress.timer(0, update, False)
 
     def do_work(col):
-        return process_notes(replace, generate_examples_for_note, selected_decks, progress_callback=update_progress)
+        return process_notes(replace, generate_examples_for_note, selected_decks=selected_decks, nids=nids, progress_callback=update_progress)
 
     def on_failure(e):
         if isinstance(e, CaptchaError):
@@ -80,7 +76,41 @@ def run_example_fetching():
         success=on_success,
     ).failure(on_failure).with_progress().run_in_background()
 
+def run_example_fetching():
+    """Initiate the example sentence fetching process for specific decks."""
+    selected_decks, replace = select_decks_and_options()
+    if not selected_decks:
+        return
+    _run_fetching_background(selected_decks=selected_decks, replace=replace)
+
+def run_example_fetching_for_selection(browser):
+    """Initiate the example sentence fetching process for selected notes in browser."""
+    nids = browser.selectedNotes()
+    if not nids:
+        showInfo("No notes selected.")
+        return
+    
+    # For selection, we might still want to ask about overwriting, but skip deck selection.
+    # However, to keep it simple and consistent with how browser tools usually work:
+    # Let's just ask if they want to replace existing.
+    from aqt.utils import askUser
+    replace = askUser("Replace existing example sentences if they are not empty?")
+    
+    _run_fetching_background(nids=nids, replace=replace)
+
+def setup_browser_menu(browser):
+    """Add a menu item to the browser's Edit menu."""
+    menu = browser.form.menuEdit
+    menu.addSeparator()
+    action = QAction("Fetch German Example Sentences for Selected Notes", browser)
+    qconnect(action.triggered, lambda: run_example_fetching_for_selection(browser))
+    menu.addAction(action)
+
 # Register a menu item in Anki's Tools menu
 action = QAction("📖 Fetch German Example Sentences for Notes", mw)
 qconnect(action.triggered, run_example_fetching)
 mw.form.menuTools.addAction(action)
+
+# Register the browser menu hook
+from anki.hooks import addHook
+addHook("browser.setupMenus", setup_browser_menu)
