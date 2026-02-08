@@ -1,7 +1,7 @@
 {
   "name": "Anki Satzapp Examples",
   "package": "AnkiSatzappExamples",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "mod": 1753734178,
   "author": "Frank Valenziano",
   "description": "Fetches German example sentences and English translations from Satzapp.",

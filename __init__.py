@@ -113,7 +113,7 @@ def setup_browser_menu(browser):
     """Add a menu item to the browser's Edit menu."""
     menu = browser.form.menuEdit
     menu.addSeparator()
-    action = QAction("Fetch German Example Sentences for Selected Notes", browser)
+    action = QAction("📖 Fetch German Example Sentences for Selected Notes", browser)
     qconnect(action.triggered, lambda: run_example_fetching_for_selection(browser))
     menu.addAction(action)
 
